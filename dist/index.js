@@ -182,6 +182,7 @@ async function run() {
             catch (err) {
                 core.error('axios post failed, double check the payload being sent includes the keys Slack expects');
                 core.debug(JSON.stringify(payload));
+                core.debug(JSON.stringify(err));
                 if (err instanceof axios_1.AxiosError) {
                     if (err.response) {
                         core.setFailed(err.response.data);

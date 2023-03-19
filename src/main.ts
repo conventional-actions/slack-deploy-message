@@ -113,6 +113,7 @@ async function run(): Promise<void> {
           'axios post failed, double check the payload being sent includes the keys Slack expects'
         )
         core.debug(JSON.stringify(payload))
+        core.debug(JSON.stringify(err))
 
         if (err instanceof AxiosError) {
           if (err.response) {
