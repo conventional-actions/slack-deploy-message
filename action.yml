@@ -24,6 +24,10 @@ inputs:
     required: false
     description: 'Slack channel ID'
     default: ''
+  webhook-type:
+    required: false
+    description: 'Webhook type'
+    default: 'WORKFLOW_TRIGGER'
 runs:
   using: 'node16'
   main: 'dist/index.js'
