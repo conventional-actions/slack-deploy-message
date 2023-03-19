@@ -162,6 +162,9 @@ async function run() {
                 flatPayload['text'] = config.message;
                 payload = flatPayload;
             }
+            else {
+                payload['text'] = config.message;
+            }
             const axiosOpts = {};
             try {
                 if ((0, whatwg_url_1.parseURL)(config.webhookUrl)?.scheme === 'https') {
