@@ -86,6 +86,8 @@ async function run(): Promise<void> {
         flatPayload['text'] = config.message
 
         payload = flatPayload
+      } else {
+        payload['text'] = config.message
       }
 
       const axiosOpts: AxiosRequestConfig = {}
