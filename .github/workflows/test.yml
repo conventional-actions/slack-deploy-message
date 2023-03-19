@@ -1,0 +1,41 @@
+name: 'build-test'
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'releases/*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: 'npm'
+          scope: conventional-actions
+          registry-url: https://npm.pkg.github.com/
+          always-auth: true
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run all
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./
+        with:
+          version: 1.2.3
+
+env:
+  NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+permissions:
+  packages: read

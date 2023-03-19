@@ -1,0 +1,32 @@
+name: 'slack-deploy-message'
+description: 'Send a deploy message to Slack'
+author: 'Conventional Actions'
+inputs:
+  version:
+    required: true
+    description: 'version'
+  release-url:
+    required: true
+    description: 'URL to the release'
+  token:
+    required: false
+    description: 'bot token'
+    default: ''
+  webhook-url:
+    required: false
+    description: 'webhook URL'
+    default: ''
+  message:
+    required: false
+    description: 'Slack message'
+    default: ''
+  channel-id:
+    required: false
+    description: 'Slack channel ID'
+    default: ''
+runs:
+  using: 'node16'
+  main: 'dist/index.js'
+branding:
+  icon: hash
+  color: purple
