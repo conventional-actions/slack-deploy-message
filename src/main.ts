@@ -48,44 +48,48 @@ async function run(): Promise<void> {
     let payload = {
       link_names: true,
       type: 'mrkdwn',
-      blocks: [
+      blocks: []
+    } as {[key: string]: any}
+
+    payload.blocks.push({
+      type: 'header',
+      text: {
+        type: 'plain_text',
+        text: `${repo} ${config.version} has been released`
+      }
+    })
+
+    if (existingRelease?.data?.body_text) {
+      payload.blocks.push({
+        type: 'section',
+        text: {
+          type: 'plain_text',
+          text: existingRelease.data.body_text
+        }
+      })
+    }
+
+    payload.blocks.push({
+      type: 'divider'
+    })
+
+    payload.blocks.push({
+      type: 'context',
+      elements: [
         {
-          type: 'header',
-          text: {
-            type: 'plain_text',
-            text: `${repo} ${config.version} has been released`
-          }
+          type: 'mrkdwn',
+          text: `Repository: <https://github.com/${owner}/${repo}|${owner}/${repo}>`
         },
         {
-          type: 'section',
-          text: {
-            type: 'plain_text',
-            text: existingRelease.data.body_text,
-            emoji: true
-          }
+          type: 'mrkdwn',
+          text: `Release: <${existingRelease.data.url}|${config.version}>`
         },
         {
-          type: 'divider'
-        },
-        {
-          type: 'context',
-          elements: [
-            {
-              type: 'mrkdwn',
-              text: `Repository: <https://github.com/${owner}/${repo}|${owner}/${repo}>`
-            },
-            {
-              type: 'mrkdwn',
-              text: `Release: <${existingRelease.data.url}|${config.version}>`
-            },
-            {
-              type: 'mrkdwn',
-              text: `Build: <https://github.com/${owner}/${repo}/actions/runs/${github.context.runId}|#${github.context.runNumber}>`
-            }
-          ]
+          type: 'mrkdwn',
+          text: `Build: <https://github.com/${owner}/${repo}/actions/runs/${github.context.runId}|#${github.context.runNumber}>`
         }
       ]
-    } as {[key: string]: any}
+    })
 
     let webResponse: ChatPostMessageResponse | undefined
 
