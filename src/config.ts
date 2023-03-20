@@ -11,13 +11,13 @@ export type Config = {
   webhookUrl: string
   message: string
   channelIds: string
-  releaseUrl: string
   webhookType: string
+  github_token: string
 }
 
 export async function getConfig(): Promise<Config> {
-  const botToken = (core.getInput('token') || '').trim()
-  const webhookUrl = (core.getInput('webhook-url') || '').trim()
+  const botToken = core.getInput('bot-token') || ''
+  const webhookUrl = core.getInput('webhook-url', {required: true}) || ''
 
   if (botToken.length <= 0 && webhookUrl.length <= 0) {
     throw new Error('Need to provide at least one botToken or webhookUrl')
@@ -26,12 +26,13 @@ export async function getConfig(): Promise<Config> {
   return {
     botToken,
     webhookUrl,
-    version: (core.getInput('version') || '').trim(),
-    message: (core.getInput('message') || '').trim(),
-    channelIds: (core.getInput('channel-id') || '').trim(),
-    releaseUrl: (core.getInput('release-url') || '').trim(),
+    version: core.getInput('version') || '',
+    message: core.getInput('message') || '',
+    channelIds: core.getInput('channel-id') || '',
     webhookType:
-      SlackWebhookType[core.getInput('webhook-type').toUpperCase().trim()] ||
-      SlackWebhookType.WORKFLOW_TRIGGER
+      SlackWebhookType[core.getInput('webhook-type').toUpperCase()] ||
+      SlackWebhookType.WORKFLOW_TRIGGER,
+    github_token:
+      core.getInput('github-token') || process.env.GITHUB_TOKEN || ''
   }
 }

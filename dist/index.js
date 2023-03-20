@@ -37,20 +37,20 @@ exports.SlackWebhookType = {
     INCOMING_WEBHOOK: 'INCOMING_WEBHOOK'
 };
 async function getConfig() {
-    const botToken = (core.getInput('token') || '').trim();
-    const webhookUrl = (core.getInput('webhook-url') || '').trim();
+    const botToken = core.getInput('bot-token') || '';
+    const webhookUrl = core.getInput('webhook-url', { required: true }) || '';
     if (botToken.length <= 0 && webhookUrl.length <= 0) {
         throw new Error('Need to provide at least one botToken or webhookUrl');
     }
     return {
         botToken,
         webhookUrl,
-        version: (core.getInput('version') || '').trim(),
-        message: (core.getInput('message') || '').trim(),
-        channelIds: (core.getInput('channel-id') || '').trim(),
-        releaseUrl: (core.getInput('release-url') || '').trim(),
-        webhookType: exports.SlackWebhookType[core.getInput('webhook-type').toUpperCase().trim()] ||
-            exports.SlackWebhookType.WORKFLOW_TRIGGER
+        version: core.getInput('version') || '',
+        message: core.getInput('message') || '',
+        channelIds: core.getInput('channel-id') || '',
+        webhookType: exports.SlackWebhookType[core.getInput('webhook-type').toUpperCase()] ||
+            exports.SlackWebhookType.WORKFLOW_TRIGGER,
+        github_token: core.getInput('github-token') || process.env.GITHUB_TOKEN || ''
     };
 }
 exports.getConfig = getConfig;
@@ -101,6 +101,32 @@ const axios_1 = __importStar(__nccwpck_require__(8757));
 async function run() {
     try {
         const config = await (0, config_1.getConfig)();
+        const gh = github.getOctokit(config.github_token, {
+            throttle: {
+                onRateLimit: (retryAfter, options) => {
+                    core.warning(`Request quota exhausted for request ${options.method} ${options.url}`);
+                    if (options.request.retryCount === 0) {
+                        core.info(`Retrying after ${retryAfter} seconds!`);
+                        return true;
+                    }
+                },
+                onAbuseLimit: (retryAfter, options) => {
+                    core.warning(`Abuse detected for request ${options.method} ${options.url}`);
+                }
+            }
+        });
+        const owner = github.context.repo.owner;
+        const repo = github.context.repo.repo;
+        const tag = config.version;
+        const existingRelease = await gh.rest.repos.getReleaseByTag({
+            owner,
+            repo,
+            tag
+        });
+        if (existingRelease === undefined) {
+            core.setFailed(`could not find release ${config.version}`);
+            return;
+        }
         let payload = {
             link_names: true,
             type: 'mrkdwn',
@@ -109,7 +135,15 @@ async function run() {
                     type: 'header',
                     text: {
                         type: 'plain_text',
-                        text: `${github.context.repo.repo} ${config.version} has been released`
+                        text: `${repo} ${config.version} has been released`
+                    }
+                },
+                {
+                    type: 'section',
+                    text: {
+                        type: 'plain_text',
+                        text: existingRelease.data.body_text,
+                        emoji: true
                     }
                 },
                 {
@@ -120,15 +154,15 @@ async function run() {
                     elements: [
                         {
                             type: 'mrkdwn',
-                            text: `Repository: <https://github.com/${github.context.repo.owner}/${github.context.repo.repo}|${github.context.repo.owner}/${github.context.repo.repo}>`
+                            text: `Repository: <https://github.com/${owner}/${repo}|${owner}/${repo}>`
                         },
                         {
                             type: 'mrkdwn',
-                            text: `Release: <${config.releaseUrl}|${config.version}>`
+                            text: `Release: <${existingRelease.data.url}|${config.version}>`
                         },
                         {
                             type: 'mrkdwn',
-                            text: `Build: <https://github.com/${github.context.repo.owner}/${github.context.repo.repo}/actions/runs/${github.context.runId}|#${github.context.runNumber}>`
+                            text: `Build: <https://github.com/${owner}/${repo}/actions/runs/${github.context.runId}|#${github.context.runNumber}>`
                         }
                     ]
                 }

@@ -12,6 +12,39 @@ async function run(): Promise<void> {
   try {
     const config = await getConfig()
 
+    const gh = github.getOctokit(config.github_token, {
+      throttle: {
+        onRateLimit: (retryAfter: number, options: any) => {
+          core.warning(
+            `Request quota exhausted for request ${options.method} ${options.url}`
+          )
+          if (options.request.retryCount === 0) {
+            core.info(`Retrying after ${retryAfter} seconds!`)
+            return true
+          }
+        },
+        onAbuseLimit: (retryAfter: number, options: any) => {
+          core.warning(
+            `Abuse detected for request ${options.method} ${options.url}`
+          )
+        }
+      }
+    })
+
+    const owner = github.context.repo.owner
+    const repo = github.context.repo.repo
+    const tag = config.version
+
+    const existingRelease = await gh.rest.repos.getReleaseByTag({
+      owner,
+      repo,
+      tag
+    })
+    if (existingRelease === undefined) {
+      core.setFailed(`could not find release ${config.version}`)
+      return
+    }
+
     let payload = {
       link_names: true,
       type: 'mrkdwn',
@@ -20,7 +53,15 @@ async function run(): Promise<void> {
           type: 'header',
           text: {
             type: 'plain_text',
-            text: `${github.context.repo.repo} ${config.version} has been released`
+            text: `${repo} ${config.version} has been released`
+          }
+        },
+        {
+          type: 'section',
+          text: {
+            type: 'plain_text',
+            text: existingRelease.data.body_text,
+            emoji: true
           }
         },
         {
@@ -31,15 +72,15 @@ async function run(): Promise<void> {
           elements: [
             {
               type: 'mrkdwn',
-              text: `Repository: <https://github.com/${github.context.repo.owner}/${github.context.repo.repo}|${github.context.repo.owner}/${github.context.repo.repo}>`
+              text: `Repository: <https://github.com/${owner}/${repo}|${owner}/${repo}>`
             },
             {
               type: 'mrkdwn',
-              text: `Release: <${config.releaseUrl}|${config.version}>`
+              text: `Release: <${existingRelease.data.url}|${config.version}>`
             },
             {
               type: 'mrkdwn',
-              text: `Build: <https://github.com/${github.context.repo.owner}/${github.context.repo.repo}/actions/runs/${github.context.runId}|#${github.context.runNumber}>`
+              text: `Build: <https://github.com/${owner}/${repo}/actions/runs/${github.context.runId}|#${github.context.runNumber}>`
             }
           ]
         }

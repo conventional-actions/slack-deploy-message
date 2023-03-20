@@ -5,10 +5,7 @@ inputs:
   version:
     required: true
     description: 'version'
-  release-url:
-    required: true
-    description: 'URL to the release'
-  token:
+  bot-token:
     required: false
     description: 'bot token'
     default: ''
@@ -28,6 +25,10 @@ inputs:
     required: false
     description: 'Webhook type'
     default: 'WORKFLOW_TRIGGER'
+  github-token:
+    required: false
+    description: 'GitHub token'
+    default: ${env.GITHUB_TOKEN}
 runs:
   using: 'node16'
   main: 'dist/index.js'
