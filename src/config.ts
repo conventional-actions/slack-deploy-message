@@ -16,8 +16,8 @@ export type Config = {
 }
 
 export async function getConfig(): Promise<Config> {
-  const botToken = core.getInput('token') || ''
-  const webhookUrl = core.getInput('webhook-url') || ''
+  const botToken = (core.getInput('token') || '').trim()
+  const webhookUrl = (core.getInput('webhook-url') || '').trim()
 
   if (botToken.length <= 0 && webhookUrl.length <= 0) {
     throw new Error('Need to provide at least one botToken or webhookUrl')
@@ -26,12 +26,12 @@ export async function getConfig(): Promise<Config> {
   return {
     botToken,
     webhookUrl,
-    version: core.getInput('version') || '',
-    message: core.getInput('message') || '',
-    channelIds: core.getInput('channel-id') || '',
-    releaseUrl: core.getInput('release-url') || '',
+    version: (core.getInput('version') || '').trim(),
+    message: (core.getInput('message') || '').trim(),
+    channelIds: (core.getInput('channel-id') || '').trim(),
+    releaseUrl: (core.getInput('release-url') || '').trim(),
     webhookType:
-      SlackWebhookType[core.getInput('webhook-type').toUpperCase()] ||
+      SlackWebhookType[core.getInput('webhook-type').toUpperCase().trim()] ||
       SlackWebhookType.WORKFLOW_TRIGGER
   }
 }

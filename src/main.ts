@@ -20,7 +20,7 @@ async function run(): Promise<void> {
           type: 'header',
           text: {
             type: 'plain_text',
-            text: `Deploy ${github.context.repo.repo} ${config.version}`
+            text: `${github.context.repo.repo} ${config.version} has been released`
           }
         },
         {
@@ -55,9 +55,10 @@ async function run(): Promise<void> {
         core.warning(
           'Channel ID is required to run this action. An empty one has been provided'
         )
-        throw new Error(
+        core.setFailed(
           'Channel ID is required to run this action. An empty one has been provided'
         )
+        return
       }
 
       await Promise.all(
@@ -117,14 +118,10 @@ async function run(): Promise<void> {
         core.debug(JSON.stringify(payload))
         core.debug(JSON.stringify(err))
 
-        if (err instanceof AxiosError) {
-          if (err.response) {
-            core.setFailed(err.response.data)
-          }
-
+        if (err instanceof AxiosError && err.response) {
+          core.setFailed(err.response.data)
+        } else if (err instanceof Error) {
           core.setFailed(err.message)
-        } else {
-          core.setFailed(err as Error)
         }
         return
       }
