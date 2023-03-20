@@ -37,19 +37,19 @@ exports.SlackWebhookType = {
     INCOMING_WEBHOOK: 'INCOMING_WEBHOOK'
 };
 async function getConfig() {
-    const botToken = core.getInput('token') || '';
-    const webhookUrl = core.getInput('webhook-url') || '';
+    const botToken = (core.getInput('token') || '').trim();
+    const webhookUrl = (core.getInput('webhook-url') || '').trim();
     if (botToken.length <= 0 && webhookUrl.length <= 0) {
         throw new Error('Need to provide at least one botToken or webhookUrl');
     }
     return {
         botToken,
         webhookUrl,
-        version: core.getInput('version') || '',
-        message: core.getInput('message') || '',
-        channelIds: core.getInput('channel-id') || '',
-        releaseUrl: core.getInput('release-url') || '',
-        webhookType: exports.SlackWebhookType[core.getInput('webhook-type').toUpperCase()] ||
+        version: (core.getInput('version') || '').trim(),
+        message: (core.getInput('message') || '').trim(),
+        channelIds: (core.getInput('channel-id') || '').trim(),
+        releaseUrl: (core.getInput('release-url') || '').trim(),
+        webhookType: exports.SlackWebhookType[core.getInput('webhook-type').toUpperCase().trim()] ||
             exports.SlackWebhookType.WORKFLOW_TRIGGER
     };
 }
@@ -109,7 +109,7 @@ async function run() {
                     type: 'header',
                     text: {
                         type: 'plain_text',
-                        text: `Deploy ${github.context.repo.repo} ${config.version}`
+                        text: `${github.context.repo.repo} ${config.version} has been released`
                     }
                 },
                 {
@@ -139,7 +139,8 @@ async function run() {
             const web = new web_api_1.WebClient(config.botToken);
             if (config.channelIds.length <= 0) {
                 core.warning('Channel ID is required to run this action. An empty one has been provided');
-                throw new Error('Channel ID is required to run this action. An empty one has been provided');
+                core.setFailed('Channel ID is required to run this action. An empty one has been provided');
+                return;
             }
             await Promise.all(config.channelIds.split(',').map(async (channelId) => {
                 // post message
@@ -186,14 +187,11 @@ async function run() {
                 core.error('axios post failed, double check the payload being sent includes the keys Slack expects');
                 core.debug(JSON.stringify(payload));
                 core.debug(JSON.stringify(err));
-                if (err instanceof axios_1.AxiosError) {
-                    if (err.response) {
-                        core.setFailed(err.response.data);
-                    }
-                    core.setFailed(err.message);
+                if (err instanceof axios_1.AxiosError && err.response) {
+                    core.setFailed(err.response.data);
                 }
-                else {
-                    core.setFailed(err);
+                else if (err instanceof Error) {
+                    core.setFailed(err.message);
                 }
                 return;
             }
