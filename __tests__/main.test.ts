@@ -9,7 +9,7 @@ test('test runs', () => {
   process.env['INPUT_WEBHOOK-URL'] = ''
   process.env['GITHUB_REPOSITORY'] = 'ketch-com/bearing'
   const np = process.execPath
-  const ip = path.join(__dirname, '..', 'lib', 'main.js')
+  const ip = path.join(__dirname, '..', 'dist', 'index.cjs')
   const options: cp.ExecFileSyncOptions = {
     env: process.env
   }
